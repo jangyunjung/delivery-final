@@ -1,0 +1,83 @@
+PRAGMA foreign_keys = ON;
+
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS order_restaurants;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS favorite_restaurants;
+DROP TABLE IF EXISTS menu_items;
+DROP TABLE IF EXISTS restaurants;
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL UNIQUE,
+  passwordHash TEXT NOT NULL,
+  name TEXT NOT NULL,
+  createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE restaurants (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT NOT NULL,
+  imageUrl TEXT,
+  createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE menu_items (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  restaurantId INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  price INTEGER NOT NULL,
+  imageUrl TEXT,
+  createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT menu_items_restaurantId_fkey FOREIGN KEY (restaurantId) REFERENCES restaurants (id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE orders (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER NOT NULL,
+  totalPrice INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT '주문완료',
+  createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT orders_userId_fkey FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE order_restaurants (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  orderId INTEGER NOT NULL,
+  restaurantId INTEGER NOT NULL,
+  restaurantNameSnapshot TEXT NOT NULL,
+  restaurantRequest TEXT,
+  restaurantSubtotal INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT '접수대기',
+  createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT order_restaurants_orderId_fkey FOREIGN KEY (orderId) REFERENCES orders (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT order_restaurants_restaurantId_fkey FOREIGN KEY (restaurantId) REFERENCES restaurants (id) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE order_items (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  orderRestaurantId INTEGER NOT NULL,
+  menuItemId INTEGER,
+  menuNameSnapshot TEXT NOT NULL,
+  priceSnapshot INTEGER NOT NULL,
+  quantity INTEGER NOT NULL,
+  subtotal INTEGER NOT NULL,
+  createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT order_items_orderRestaurantId_fkey FOREIGN KEY (orderRestaurantId) REFERENCES order_restaurants (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT order_items_menuItemId_fkey FOREIGN KEY (menuItemId) REFERENCES menu_items (id) ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE TABLE favorite_restaurants (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER NOT NULL,
+  restaurantId INTEGER NOT NULL,
+  createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT favorite_restaurants_userId_fkey FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT favorite_restaurants_restaurantId_fkey FOREIGN KEY (restaurantId) REFERENCES restaurants (id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE UNIQUE INDEX favorite_restaurants_userId_restaurantId_key ON favorite_restaurants(userId, restaurantId);
