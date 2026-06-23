@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { ReorderButton } from "@/components/ReorderButton";
 
 function formatPrice(price: number) {
   return price.toLocaleString("ko-KR") + "원";
@@ -11,7 +11,15 @@ export default async function OrdersPage() {
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect("/login");
+    return (
+      <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <h1 className="text-2xl font-black text-slate-950">로그인이 필요합니다</h1>
+        <p className="mt-2 text-slate-600">주문 내역은 로그인한 사용자만 확인할 수 있습니다.</p>
+        <Link href="/login" className="mt-5 inline-flex rounded-md bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700">
+          로그인하러 가기
+        </Link>
+      </div>
+    );
   }
 
   const orders = await prisma.order.findMany({
@@ -59,6 +67,18 @@ export default async function OrdersPage() {
                   <p className="text-sm font-bold text-emerald-700">{order.status}</p>
                   <p className="text-2xl font-black text-slate-950">{formatPrice(order.totalPrice)}</p>
                 </div>
+                <ReorderButton
+                  items={order.orderRestaurants.flatMap((orderRestaurant) =>
+                    orderRestaurant.orderItems.map((item) => ({
+                      menuItemId: item.menuItemId,
+                      name: item.menuNameSnapshot,
+                      price: item.priceSnapshot,
+                      quantity: item.quantity,
+                      restaurantId: orderRestaurant.restaurantId,
+                      restaurantName: orderRestaurant.restaurantNameSnapshot,
+                    }))
+                  )}
+                />
               </div>
 
               <div className="mt-4 grid gap-4">

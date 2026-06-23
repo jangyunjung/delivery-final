@@ -1,64 +1,73 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getCartItemCount, getCartItems, getRestaurantCartCount, mergeCartItems, saveCartItems } from "@/lib/cart";
 import type { CartItem, RestaurantWithMenus } from "@/types/cart";
-
-const CART_KEY = "delivery-demo-cart";
 
 function formatPrice(price: number) {
   return price.toLocaleString("ko-KR") + "원";
 }
 
-function readCart(): CartItem[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    return JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as CartItem[];
-  } catch {
-    return [];
-  }
-}
-
-function writeCart(items: CartItem[]) {
-  localStorage.setItem(CART_KEY, JSON.stringify(items));
-  window.dispatchEvent(new Event("cart-updated"));
-}
-
 export function MenuBrowser({ restaurants }: { restaurants: RestaurantWithMenus[] }) {
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
+
+    return getCartItems();
+  });
   const [notice, setNotice] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("전체");
 
   const categories = useMemo(() => ["전체", ...new Set(restaurants.map((restaurant) => restaurant.category))], [restaurants]);
+  const totalCartCount = getCartItemCount(cartItems);
   const visibleRestaurants =
     selectedCategory === "전체"
       ? restaurants
       : restaurants.filter((restaurant) => restaurant.category === selectedCategory);
 
-  function addToCart(restaurant: RestaurantWithMenus, menuItem: RestaurantWithMenus["menuItems"][number]) {
-    const cart = readCart();
-    const existingItem = cart.find((item) => item.menuItemId === menuItem.id);
-
-    if (existingItem) {
-      existingItem.quantity += 1;
-      writeCart(cart);
-    } else {
-      writeCart([
-        ...cart,
-        {
-          menuItemId: menuItem.id,
-          name: menuItem.name,
-          price: menuItem.price,
-          quantity: 1,
-          restaurantId: restaurant.id,
-          restaurantName: restaurant.name,
-        },
-      ]);
+  useEffect(() => {
+    function syncCart() {
+      setCartItems(getCartItems());
     }
 
+    window.addEventListener("cart-updated", syncCart);
+    window.addEventListener("storage", syncCart);
+
+    return () => {
+      window.removeEventListener("cart-updated", syncCart);
+      window.removeEventListener("storage", syncCart);
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  function addToCart(restaurant: RestaurantWithMenus, menuItem: RestaurantWithMenus["menuItems"][number]) {
+    const nextCartItems = mergeCartItems(getCartItems(), [
+      {
+        menuItemId: menuItem.id,
+        name: menuItem.name,
+        price: menuItem.price,
+        quantity: 1,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+      },
+    ]);
+
+    saveCartItems(nextCartItems);
+    setCartItems(nextCartItems);
     setNotice(`${menuItem.name}을 장바구니에 담았습니다.`);
+
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = setTimeout(() => {
+      setNotice("");
+    }, 1800);
   }
 
   return (
@@ -70,7 +79,7 @@ export function MenuBrowser({ restaurants }: { restaurants: RestaurantWithMenus[
             <h1 className="mt-1 text-3xl font-black text-slate-950">식당과 메뉴를 골라 주문해보세요</h1>
           </div>
           <Link href="/cart" className="rounded-md bg-emerald-600 px-4 py-2 text-center font-semibold text-white hover:bg-emerald-700">
-            장바구니 보기
+            장바구니 보기{totalCartCount > 0 ? ` (${totalCartCount})` : ""}
           </Link>
         </div>
       </section>
@@ -91,7 +100,11 @@ export function MenuBrowser({ restaurants }: { restaurants: RestaurantWithMenus[
         ))}
       </div>
 
-      {notice ? <p className="rounded-md bg-slate-900 px-4 py-3 text-sm font-semibold text-white">{notice}</p> : null}
+      {notice ? (
+        <div className="fixed bottom-5 left-1/2 z-20 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-lg bg-slate-950 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg">
+          {notice}
+        </div>
+      ) : null}
 
       <div className="grid gap-5">
         {visibleRestaurants.map((restaurant) => (
@@ -109,6 +122,15 @@ export function MenuBrowser({ restaurants }: { restaurants: RestaurantWithMenus[
                     <h2 className="text-2xl font-black text-slate-950">{restaurant.name}</h2>
                     <p className="mt-1 text-sm text-slate-600">{restaurant.description}</p>
                   </div>
+                  {getRestaurantCartCount(cartItems, restaurant.id) > 0 ? (
+                    <span className="rounded-md bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-700">
+                      이 가게에서 {getRestaurantCartCount(cartItems, restaurant.id)}개 담김
+                    </span>
+                  ) : (
+                    <span className="rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-500">
+                      아직 담긴 메뉴 없음
+                    </span>
+                  )}
                 </div>
                 <div className="mt-5 grid gap-3">
                   {restaurant.menuItems.map((menuItem) => (

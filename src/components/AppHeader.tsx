@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
+import { CartNavLink } from "./CartNavLink";
 import { LogoutButton } from "./LogoutButton";
 
 export async function AppHeader() {
@@ -15,9 +16,7 @@ export async function AppHeader() {
           <Link className="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100" href="/">
             메뉴
           </Link>
-          <Link className="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100" href="/cart">
-            장바구니
-          </Link>
+          <CartNavLink />
           <Link className="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100" href="/orders">
             주문내역
           </Link>
