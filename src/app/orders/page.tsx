@@ -27,7 +27,20 @@ export default async function OrdersPage() {
     include: {
       orderRestaurants: {
         include: {
-          orderItems: true,
+          orderItems: {
+            include: {
+              menuItem: {
+                include: {
+                  restaurant: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
         orderBy: { id: "asc" },
       },
@@ -71,11 +84,11 @@ export default async function OrdersPage() {
                   items={order.orderRestaurants.flatMap((orderRestaurant) =>
                     orderRestaurant.orderItems.map((item) => ({
                       menuItemId: item.menuItemId,
-                      name: item.menuNameSnapshot,
-                      price: item.priceSnapshot,
+                      name: item.menuItem?.name ?? item.menuNameSnapshot,
+                      price: item.menuItem?.price ?? item.priceSnapshot,
                       quantity: item.quantity,
-                      restaurantId: orderRestaurant.restaurantId,
-                      restaurantName: orderRestaurant.restaurantNameSnapshot,
+                      restaurantId: item.menuItem?.restaurant.id ?? orderRestaurant.restaurantId,
+                      restaurantName: item.menuItem?.restaurant.name ?? orderRestaurant.restaurantNameSnapshot,
                     }))
                   )}
                 />

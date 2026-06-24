@@ -20,6 +20,9 @@ export async function AppHeader() {
           <Link className="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100" href="/orders">
             주문내역
           </Link>
+          <Link className="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100" href="/favorites">
+            즐겨찾기
+          </Link>
           {user ? (
             <>
               <span className="hidden text-slate-500 sm:inline">{user.name}님</span>

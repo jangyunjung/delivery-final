@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { getCartItemCount, getCartItems, mergeCartItems, saveCartItems } from "@/lib/cart";
 import type { CartItem } from "@/types/cart";
 
@@ -67,7 +68,14 @@ export function ReorderButton({ items }: { items: ReorderItem[] }) {
       <button onClick={reorder} className="rounded-md bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700">
         다시 담기
       </button>
-      {message ? <p className="max-w-xs text-sm font-semibold text-emerald-700">{message}</p> : null}
+      {message ? (
+        <div className="max-w-xs text-sm font-semibold text-emerald-700">
+          <p>{message}</p>
+          <Link href="/cart" className="mt-1 inline-flex text-slate-700 underline">
+            장바구니 보기
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

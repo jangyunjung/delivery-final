@@ -3,42 +3,52 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCartItemCount, getCartItems, getRestaurantCartCount, mergeCartItems, saveCartItems } from "@/lib/cart";
-import type { CartItem, RestaurantWithMenus } from "@/types/cart";
+import { useCartItems } from "@/hooks/useCartItems";
+import type { RestaurantWithMenus } from "@/types/cart";
 
 function formatPrice(price: number) {
   return price.toLocaleString("ko-KR") + "원";
 }
 
-export function MenuBrowser({ restaurants }: { restaurants: RestaurantWithMenus[] }) {
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    if (typeof window === "undefined") {
-      return [];
-    }
+type MenuBrowserProps = {
+  favoriteRestaurantIds: number[];
+  isLoggedIn: boolean;
+  restaurants: RestaurantWithMenus[];
+};
 
-    return getCartItems();
-  });
+export function MenuBrowser({ favoriteRestaurantIds, isLoggedIn, restaurants }: MenuBrowserProps) {
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cartItems = useCartItems();
+  const [favoriteOverrideIds, setFavoriteOverrideIds] = useState<number[] | null>(null);
   const [notice, setNotice] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("전체");
 
-  const categories = useMemo(() => ["전체", ...new Set(restaurants.map((restaurant) => restaurant.category))], [restaurants]);
+  const categories = useMemo(() => ["전체", "즐겨찾기", ...new Set(restaurants.map((restaurant) => restaurant.category))], [restaurants]);
+  const favorites = useMemo(
+    () => new Set(favoriteOverrideIds ?? (isLoggedIn ? favoriteRestaurantIds : [])),
+    [favoriteOverrideIds, favoriteRestaurantIds, isLoggedIn]
+  );
   const totalCartCount = getCartItemCount(cartItems);
   const visibleRestaurants =
     selectedCategory === "전체"
       ? restaurants
+      : selectedCategory === "즐겨찾기"
+        ? restaurants.filter((restaurant) => favorites.has(restaurant.id))
       : restaurants.filter((restaurant) => restaurant.category === selectedCategory);
 
   useEffect(() => {
-    function syncCart() {
-      setCartItems(getCartItems());
+    function syncAuthState(event: Event) {
+      const authEvent = event as CustomEvent<{ isLoggedIn: boolean }>;
+
+      if (!authEvent.detail?.isLoggedIn) {
+        setFavoriteOverrideIds([]);
+      }
     }
 
-    window.addEventListener("cart-updated", syncCart);
-    window.addEventListener("storage", syncCart);
+    window.addEventListener("auth-changed", syncAuthState);
 
     return () => {
-      window.removeEventListener("cart-updated", syncCart);
-      window.removeEventListener("storage", syncCart);
+      window.removeEventListener("auth-changed", syncAuthState);
       if (toastTimerRef.current) {
         clearTimeout(toastTimerRef.current);
       }
@@ -58,7 +68,6 @@ export function MenuBrowser({ restaurants }: { restaurants: RestaurantWithMenus[
     ]);
 
     saveCartItems(nextCartItems);
-    setCartItems(nextCartItems);
     setNotice(`${menuItem.name}을 장바구니에 담았습니다.`);
 
     if (toastTimerRef.current) {
@@ -70,6 +79,50 @@ export function MenuBrowser({ restaurants }: { restaurants: RestaurantWithMenus[
     }, 1800);
   }
 
+  function showNotice(message: string) {
+    setNotice(message);
+
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = setTimeout(() => {
+      setNotice("");
+    }, 1800);
+  }
+
+  async function toggleFavorite(restaurant: RestaurantWithMenus) {
+    if (!isLoggedIn) {
+      showNotice("로그인 후 식당을 즐겨찾기할 수 있습니다.");
+      return;
+    }
+
+    const isFavorite = favorites.has(restaurant.id);
+    const nextFavorites = new Set(favorites);
+    const previousFavoriteIds = [...favorites];
+
+    if (isFavorite) {
+      nextFavorites.delete(restaurant.id);
+    } else {
+      nextFavorites.add(restaurant.id);
+    }
+
+    setFavoriteOverrideIds([...nextFavorites]);
+    showNotice(isFavorite ? `${restaurant.name} 즐겨찾기를 해제했습니다.` : `${restaurant.name}을 즐겨찾기에 추가했습니다.`);
+
+    const response = await fetch("/api/favorites", {
+      method: isFavorite ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ restaurantId: restaurant.id }),
+    });
+
+    if (!response.ok) {
+      setFavoriteOverrideIds(previousFavoriteIds);
+      const result = await response.json();
+      showNotice(result.message ?? "즐겨찾기를 저장하지 못했습니다.");
+    }
+  }
+
   return (
     <div className="grid gap-6">
       <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-5">
@@ -78,9 +131,14 @@ export function MenuBrowser({ restaurants }: { restaurants: RestaurantWithMenus[
             <p className="text-sm font-semibold text-emerald-700">로컬 SQLite 데모</p>
             <h1 className="mt-1 text-3xl font-black text-slate-950">식당과 메뉴를 골라 주문해보세요</h1>
           </div>
-          <Link href="/cart" className="rounded-md bg-emerald-600 px-4 py-2 text-center font-semibold text-white hover:bg-emerald-700">
-            장바구니 보기{totalCartCount > 0 ? ` (${totalCartCount})` : ""}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/orders" className="rounded-md border border-emerald-600 bg-white px-4 py-2 text-center font-semibold text-emerald-700 hover:bg-emerald-100">
+              주문확인하기
+            </Link>
+            <Link href="/cart" className="rounded-md bg-emerald-600 px-4 py-2 text-center font-semibold text-white hover:bg-emerald-700">
+              장바구니 보기{totalCartCount > 0 ? ` (${totalCartCount})` : ""}
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -99,6 +157,12 @@ export function MenuBrowser({ restaurants }: { restaurants: RestaurantWithMenus[
           </button>
         ))}
       </div>
+
+      {selectedCategory === "즐겨찾기" && visibleRestaurants.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-slate-600">
+          아직 즐겨찾기한 식당이 없습니다.
+        </div>
+      ) : null}
 
       {notice ? (
         <div className="fixed bottom-5 left-1/2 z-20 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-lg bg-slate-950 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg">
@@ -119,18 +183,35 @@ export function MenuBrowser({ restaurants }: { restaurants: RestaurantWithMenus[
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-bold text-emerald-700">{restaurant.category}</p>
-                    <h2 className="text-2xl font-black text-slate-950">{restaurant.name}</h2>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <h2 className="text-2xl font-black text-slate-950">{restaurant.name}</h2>
+                      {favorites.has(restaurant.id) ? (
+                        <span className="rounded-md bg-amber-50 px-2 py-1 text-xs font-black text-amber-700">즐겨찾기</span>
+                      ) : null}
+                    </div>
                     <p className="mt-1 text-sm text-slate-600">{restaurant.description}</p>
                   </div>
-                  {getRestaurantCartCount(cartItems, restaurant.id) > 0 ? (
-                    <span className="rounded-md bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-700">
-                      이 가게에서 {getRestaurantCartCount(cartItems, restaurant.id)}개 담김
-                    </span>
-                  ) : (
-                    <span className="rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-500">
-                      아직 담긴 메뉴 없음
-                    </span>
-                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => toggleFavorite(restaurant)}
+                      className={`rounded-md border px-3 py-2 text-sm font-black ${
+                        favorites.has(restaurant.id)
+                          ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                          : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      {favorites.has(restaurant.id) ? "즐겨찾기 해제" : "즐겨찾기"}
+                    </button>
+                    {getRestaurantCartCount(cartItems, restaurant.id) > 0 ? (
+                      <span className="rounded-md bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-700">
+                        이 가게에서 {getRestaurantCartCount(cartItems, restaurant.id)}개 담김
+                      </span>
+                    ) : (
+                      <span className="rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-500">
+                        아직 담긴 메뉴 없음
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-5 grid gap-3">
                   {restaurant.menuItems.map((menuItem) => (
