@@ -188,14 +188,25 @@ export function MenuBrowser({ favoriteRestaurantIds, isLoggedIn, restaurants }: 
                   <div>
                     <p className="text-sm font-bold text-emerald-700">{restaurant.category}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <h2 className="text-2xl font-black text-slate-950">{restaurant.name}</h2>
+                      <Link href={`/restaurants/${restaurant.id}`} className="text-2xl font-black text-slate-950 hover:text-emerald-700">
+                        {restaurant.name}
+                      </Link>
                       {favorites.has(restaurant.id) ? (
                         <span className="rounded-md bg-amber-50 px-2 py-1 text-xs font-black text-amber-700">즐겨찾기</span>
                       ) : null}
                     </div>
                     <p className="mt-1 text-sm text-slate-600">{restaurant.description}</p>
+                    <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-700">
+                      메뉴: {restaurant.menuItems.map((menuItem) => menuItem.name).join(", ")}
+                    </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    <Link
+                      href={`/restaurants/${restaurant.id}`}
+                      className="rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm font-black text-emerald-700 hover:bg-emerald-50"
+                    >
+                      가게 보기
+                    </Link>
                     <button
                       onClick={() => toggleFavorite(restaurant)}
                       className={`rounded-md border px-3 py-2 text-sm font-black ${

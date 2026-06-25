@@ -61,7 +61,9 @@ export default async function FavoritesPage() {
           {favoriteRestaurants.map(({ restaurant }) => (
             <article key={restaurant.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-sm font-bold text-emerald-700">{restaurant.category}</p>
-              <h2 className="mt-1 text-2xl font-black text-slate-950">{restaurant.name}</h2>
+              <Link href={`/restaurants/${restaurant.id}`} className="mt-1 inline-flex text-2xl font-black text-slate-950 hover:text-emerald-700">
+                {restaurant.name}
+              </Link>
               <p className="mt-2 text-sm text-slate-600">{restaurant.description}</p>
               <div className="mt-4 rounded-md bg-slate-50 p-3">
                 <p className="text-xs font-bold text-slate-500">대표 메뉴</p>
@@ -74,7 +76,7 @@ export default async function FavoritesPage() {
                   ))}
                 </ul>
               </div>
-              <Link href="/" className="mt-4 inline-flex rounded-md bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700">
+              <Link href={`/restaurants/${restaurant.id}`} className="mt-4 inline-flex rounded-md bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700">
                 메뉴 보기 / 주문하러 가기
               </Link>
             </article>
