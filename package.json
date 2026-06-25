@@ -5,11 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:vercel": "prisma generate --schema prisma/schema.postgres.prisma && next build",
     "start": "next start",
     "lint": "eslint",
     "db:init": "sqlite3 prisma/dev.db '.read prisma/init.sql'",
     "db:push": "prisma db push",
+    "db:push:prod": "prisma db push --schema prisma/schema.postgres.prisma",
     "db:seed": "prisma db seed",
+    "db:seed:prod": "prisma db seed --schema prisma/schema.postgres.prisma",
     "db:studio": "prisma studio"
   },
   "dependencies": {

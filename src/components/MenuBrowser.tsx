@@ -56,6 +56,11 @@ export function MenuBrowser({ favoriteRestaurantIds, isLoggedIn, restaurants }: 
   }, []);
 
   function addToCart(restaurant: RestaurantWithMenus, menuItem: RestaurantWithMenus["menuItems"][number]) {
+    if (!isLoggedIn) {
+      window.alert("로그인이 필요한 서비스입니다.");
+      return;
+    }
+
     const nextCartItems = mergeCartItems(getCartItems(), [
       {
         menuItemId: menuItem.id,
@@ -128,8 +133,7 @@ export function MenuBrowser({ favoriteRestaurantIds, isLoggedIn, restaurants }: 
       <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-emerald-700">로컬 SQLite 데모</p>
-            <h1 className="mt-1 text-3xl font-black text-slate-950">식당과 메뉴를 골라 주문해보세요</h1>
+            <h1 className="text-3xl font-black text-slate-950">식당과 메뉴를 골라 주문해보세요</h1>
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href="/orders" className="rounded-md border border-emerald-600 bg-white px-4 py-2 text-center font-semibold text-emerald-700 hover:bg-emerald-100">

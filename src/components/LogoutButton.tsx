@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { clearCartItems } from "@/lib/cart";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -10,9 +11,9 @@ export function LogoutButton() {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
+    clearCartItems();
     setIsLoggedOut(true);
     window.dispatchEvent(new CustomEvent("auth-changed", { detail: { isLoggedIn: false } }));
-    window.dispatchEvent(new Event("cart-updated"));
 
     startTransition(() => {
       router.replace("/");

@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  Int                  @id @default(autoincrement())
+  email               String               @unique
+  passwordHash        String
+  name                String
+  createdAt           DateTime             @default(now())
+  orders              Order[]
+  favoriteRestaurants FavoriteRestaurant[]
+
+  @@map("users")
+}
+
+model Restaurant {
+  id                  Int                  @id @default(autoincrement())
+  name                String
+  category            String
+  description         String
+  imageUrl            String?
+  createdAt           DateTime             @default(now())
+  menuItems           MenuItem[]
+  orderRestaurants    OrderRestaurant[]
+  favoriteRestaurants FavoriteRestaurant[]
+
+  @@map("restaurants")
+}
+
+model MenuItem {
+  id           Int         @id @default(autoincrement())
+  restaurantId Int
+  name         String
+  description  String
+  price        Int
+  imageUrl     String?
+  createdAt    DateTime    @default(now())
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orderItems   OrderItem[]
+
+  @@map("menu_items")
+}
+
+model Order {
+  id               Int               @id @default(autoincrement())
+  userId           Int
+  totalPrice       Int
+  status           String            @default("주문완료")
+  createdAt        DateTime          @default(now())
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderRestaurants OrderRestaurant[]
+
+  @@map("orders")
+}
+
+model OrderRestaurant {
+  id                     Int         @id @default(autoincrement())
+  orderId                Int
+  restaurantId           Int
+  restaurantNameSnapshot String
+  restaurantRequest      String?
+  restaurantSubtotal     Int
+  status                 String      @default("접수대기")
+  createdAt              DateTime    @default(now())
+  order                  Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  restaurant             Restaurant  @relation(fields: [restaurantId], references: [id])
+  orderItems             OrderItem[]
+
+  @@map("order_restaurants")
+}
+
+model OrderItem {
+  id                Int             @id @default(autoincrement())
+  orderRestaurantId Int
+  menuItemId        Int?
+  menuNameSnapshot  String
+  priceSnapshot     Int
+  quantity          Int
+  subtotal          Int
+  createdAt         DateTime        @default(now())
+  orderRestaurant   OrderRestaurant @relation(fields: [orderRestaurantId], references: [id], onDelete: Cascade)
+  menuItem           MenuItem?       @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@map("order_items")
+}
+
+model FavoriteRestaurant {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  restaurantId Int
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, restaurantId])
+  @@map("favorite_restaurants")
+}

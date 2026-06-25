@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { ReorderButton } from "@/components/ReorderButton";
+import { ReorderPanel } from "@/components/ReorderPanel";
 
 function formatPrice(price: number) {
   return price.toLocaleString("ko-KR") + "원";
@@ -80,18 +80,6 @@ export default async function OrdersPage() {
                   <p className="text-sm font-bold text-emerald-700">{order.status}</p>
                   <p className="text-2xl font-black text-slate-950">{formatPrice(order.totalPrice)}</p>
                 </div>
-                <ReorderButton
-                  items={order.orderRestaurants.flatMap((orderRestaurant) =>
-                    orderRestaurant.orderItems.map((item) => ({
-                      menuItemId: item.menuItemId,
-                      name: item.menuItem?.name ?? item.menuNameSnapshot,
-                      price: item.menuItem?.price ?? item.priceSnapshot,
-                      quantity: item.quantity,
-                      restaurantId: item.menuItem?.restaurant.id ?? orderRestaurant.restaurantId,
-                      restaurantName: item.menuItem?.restaurant.name ?? orderRestaurant.restaurantNameSnapshot,
-                    }))
-                  )}
-                />
               </div>
 
               <div className="mt-4 grid gap-4">
@@ -122,6 +110,22 @@ export default async function OrdersPage() {
                   </section>
                 ))}
               </div>
+              <ReorderPanel
+                groups={order.orderRestaurants.map((orderRestaurant) => ({
+                  id: orderRestaurant.id,
+                  restaurantName: orderRestaurant.restaurantNameSnapshot,
+                  items: orderRestaurant.orderItems.map((item) => ({
+                    id: item.id,
+                    menuItemId: item.menuItemId,
+                    name: item.menuItem?.name ?? item.menuNameSnapshot,
+                    price: item.menuItem?.price ?? item.priceSnapshot,
+                    quantity: item.quantity,
+                    restaurantId: item.menuItem?.restaurant.id ?? orderRestaurant.restaurantId,
+                    restaurantName: item.menuItem?.restaurant.name ?? orderRestaurant.restaurantNameSnapshot,
+                    isAvailable: Boolean(item.menuItemId && item.menuItem),
+                  })),
+                }))}
+              />
             </article>
           ))}
         </div>
