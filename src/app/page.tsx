@@ -1,6 +1,7 @@
 import { MenuBrowser } from "@/components/MenuBrowser";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { withStableRestaurantImages } from "@/lib/restaurant-images";
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -37,7 +38,7 @@ export default async function Home() {
       key={user?.id ?? "guest"}
       favoriteRestaurantIds={favoriteRestaurantIds}
       isLoggedIn={Boolean(user)}
-      restaurants={restaurants}
+      restaurants={withStableRestaurantImages(restaurants)}
     />
   );
 }

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { RestaurantDetail } from "@/components/RestaurantDetail";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { withStableRestaurantImage } from "@/lib/restaurant-images";
 
 export default async function RestaurantPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -48,5 +49,5 @@ export default async function RestaurantPage({ params }: { params: Promise<{ id:
       })
     : null;
 
-  return <RestaurantDetail initialIsFavorite={Boolean(favorite)} isLoggedIn={Boolean(user)} restaurant={restaurant} />;
+  return <RestaurantDetail initialIsFavorite={Boolean(favorite)} isLoggedIn={Boolean(user)} restaurant={withStableRestaurantImage(restaurant)} />;
 }
