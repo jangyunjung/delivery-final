@@ -52,7 +52,7 @@ const restaurants = [
     name: "스시하루",
     category: "일식",
     description: "초밥과 사시미 덮밥을 깔끔하게 담아내는 일식집",
-    imageUrl: "https://loremflickr.com/900/600/sushi,japanese-food?lock=301",
+    imageUrl: "/restaurant-images/9.jpeg",
     menuItems: [
       { name: "모둠 초밥", description: "연어, 광어, 새우 등 기본 초밥 구성", price: 15000 },
       { name: "연어 사케동", description: "두툼한 연어와 와사비 간장 덮밥", price: 13500 },
@@ -96,7 +96,7 @@ const restaurants = [
     name: "사이공키친",
     category: "아시안",
     description: "쌀국수와 반미를 판매하는 베트남 음식점",
-    imageUrl: "https://loremflickr.com/900/600/pho,vietnamese-food?lock=501",
+    imageUrl: "/restaurant-images/10.jpeg",
     menuItems: [
       { name: "소고기 쌀국수", description: "맑은 육수와 숙주가 들어간 베트남 쌀국수", price: 10000 },
       { name: "그릴드 포크 반미", description: "바게트에 고기와 채소를 넣은 샌드위치", price: 8500 },
@@ -107,7 +107,7 @@ const restaurants = [
     name: "타이바질",
     category: "아시안",
     description: "팟타이와 그린커리처럼 향신료가 살아 있는 태국 음식점",
-    imageUrl: "https://loremflickr.com/900/600/pad-thai,thai-food?lock=502",
+    imageUrl: "/restaurant-images/11.jpeg",
     menuItems: [
       { name: "팟타이", description: "새우와 숙주가 들어간 태국식 볶음쌀국수", price: 12000 },
       { name: "그린커리", description: "코코넛 밀크와 바질 향이 나는 커리", price: 12500 },
@@ -129,7 +129,7 @@ const restaurants = [
     name: "크리스피치킨앤랩",
     category: "패스트푸드",
     description: "치킨버거, 랩, 너겟 같은 간편한 패스트푸드 메뉴를 판매하는 매장",
-    imageUrl: "https://loremflickr.com/900/600/chicken-burger,fast-food?lock=602",
+    imageUrl: "/restaurant-images/12.jpeg",
     menuItems: [
       { name: "크리스피 치킨버거", description: "바삭한 치킨 패티와 양상추", price: 8500 },
       { name: "치킨 랩", description: "또띠아에 치킨과 채소를 말아낸 메뉴", price: 7600 },
@@ -140,7 +140,7 @@ const restaurants = [
     name: "모닝브루",
     category: "카페",
     description: "커피와 샌드위치를 함께 판매하는 아침형 카페",
-    imageUrl: "https://loremflickr.com/900/600/coffee,cafe?lock=701",
+    imageUrl: "/restaurant-images/13.jpeg",
     menuItems: [
       { name: "아메리카노", description: "고소한 원두 향의 기본 커피", price: 4000 },
       { name: "카페라떼", description: "에스프레소와 우유의 부드러운 조합", price: 4800 },
@@ -151,7 +151,7 @@ const restaurants = [
     name: "달콤베이크",
     category: "카페",
     description: "디저트 케이크와 음료를 함께 즐기는 베이커리 카페",
-    imageUrl: "https://loremflickr.com/900/600/cake,bakery-cafe?lock=702",
+    imageUrl: "/restaurant-images/14.jpeg",
     menuItems: [
       { name: "딸기 생크림 케이크", description: "생크림과 딸기가 올라간 조각 케이크", price: 7200 },
       { name: "바닐라 라떼", description: "은은한 바닐라 향의 달콤한 라떼", price: 5500 },
